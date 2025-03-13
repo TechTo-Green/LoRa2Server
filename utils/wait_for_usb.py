@@ -1,5 +1,7 @@
 import time
 
+import serial
+
 
 def wait_for_usb():
     """

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoRa App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 text-white font-sans min-h-screen flex items-center justify-center">
+<div class="container mx-auto p-8 bg-gray-800 rounded-lg shadow-lg">
+    <!-- Title -->
+    <h1 class="text-4xl font-bold text-center mb-8 text-teal-400">LoRa to Server App</h1>
+
+    <!-- Dropdown for Installed Apps -->
+    <div class="mb-6">
+        <label for="apps" class="block text-lg font-medium mb-2">Select Installed App:</label>
+        <select id="apps"
+                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring focus:ring-teal-500">
+            <option value="" disabled selected>Loading apps...</option>
+        </select>
+    </div>
+
+    <!-- Port Status Section -->  <!-- MOVED HERE -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Port Status</h2>
+            <div id="port" class="border border-gray-600 bg-gray-700 p-4 rounded shadow-md"></div>
+        </div>
+
+
+    <!-- Buttons -->
+    <div class="flex justify-center space-x-4 mb-8">
+        <button onclick="startFunction()"
+                class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-6 rounded shadow transition ease-in-out duration-200">
+            Start
+        </button>
+        <button onclick="setPort()"
+                class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded shadow transition ease-in-out duration-200">
+            Detect Port
+        </button>
+    </div>
+
+    <!-- Logs Section -->
+    <h2 class="text-xl font-semibold mb-4">Logs</h2>
+    <button onclick="fetchLogs()"
+            class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded shadow transition ease-in-out duration-200">
+        Fetch Logs
+    </button>
+    <div id="logs" class="border border-gray-600 bg-gray-700 p-4 rounded shadow-md h-48 overflow-y-scroll mt-4"></div>
+
+    <!-- Configuration Section -->
+    <h2 class="text-xl font-semibold mt-8 mb-4">Update Configuration</h2>
+    <!-- EXP_KEYS -->
+    <label for="exp_keys" class="block text-lg font-medium mb-2">Expected Keys (comma-separated):</label>
+    <input id="exp_keys" type="text" placeholder="temp,lat,lon,alt,heading"
+           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring focus:ring-teal-500 mb-4">
+
+    <!-- HOST -->
+    <label for="host" class="block text-lg font-medium mb-2">Host URL:</label>
+    <input id="host" type="text" placeholder="http://localhost:8000"
+           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring focus:ring-teal-500 mb-4">
+
+    <!-- BAUD_RATE -->
+    <label for="baud_rate" class="block text-lg font-medium mb-2">Baud Rate:</label>
+    <input id="baud_rate" type="number" placeholder="115200"
+           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring focus:ring-teal-500 mb-4">
+
+    <!-- Update Button -->
+    <button onclick="updateConfig()"
+            class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-6 rounded shadow transition ease-in-out duration-200">
+        Update Configuration
+    </button>
+
+</div>
+
+<!-- JavaScript -->
+<script>
+    // Fetch Installed Apps on Page Load
+    async function fetchInstalledApps() {
+        try {
+            const response = await axios.get('/installed-apps/');
+            const appsDropdown = document.getElementById('apps');
+            appsDropdown.innerHTML = ''; // Clear existing options
+            response.data.apps.forEach(app => {
+                const option = document.createElement('option');
+                option.value = app;
+                option.textContent = app;
+                appsDropdown.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error fetching installed apps:', error);
+            document.getElementById('apps').innerHTML = `<option value="" disabled>Error loading apps</option>`;
+        }
+    }
+
+    // Start Function
+    async function startFunction() {
+        try {
+            const response = await axios.get('/start/');
+            document.getElementById('logs').innerHTML += `<p>${response.data.message}</p>`;
+        } catch (error) {
+            console.error(error);
+            document.getElementById('logs').innerHTML += `<p>Error: Unable to start function</p>`;
+        }
+    }
+
+    // Set Port Function
+    async function setPort() {
+        document.getElementById('port').innerHTML = `<p>Detecting... Plug in the transmitter.</p>`;
+        try {
+            const response = await axios.post('/port/');
+            document.getElementById('port').innerText = `Port: ${response.data.port}`;
+        } catch (error) {
+            console.error(error);
+            document.getElementById('port').innerText = `Error: Unable to set port`;
+        }
+    }
+
+    // Fetch Logs Function
+    async function fetchLogs() {
+        const logsContainer = document.getElementById('logs');
+        logsContainer.innerHTML = '<p>Loading logs...</p>';
+
+        try {
+            const response = await axios.get('/fetch-logs/');
+            if (response.data.logs) {
+                logsContainer.innerHTML = response.data.logs.map(log => `<p>${log}</p>`).join('');
+            } else {
+                logsContainer.innerHTML = `<p>${response.data.error}</p>`;
+            }
+        } catch (error) {
+            console.error('Error fetching logs:', error);
+            logsContainer.innerHTML = '<p>Error fetching logs.</p>';
+        }
+    }
+
+    // Update Configuration Function
+    async function updateConfig() {
+        const expKeys = document.getElementById('exp_keys').value.split(',').map(key => key.trim());
+        const host = document.getElementById('host').value;
+        const baudRate = document.getElementById('baud_rate').value;
+
+        const payload = { EXP_KEYS: expKeys, HOST: host, BAUD_RATE: baudRate };
+
+        try {
+            const response = await axios.post('/config/', payload, { headers: { 'Content-Type': 'application/json' } });
+            alert(response.data.message);
+        } catch (error) {
+            console.error('Error updating configuration:', error);
+            alert('Failed to update configuration.');
+        }
+    }
+
+    // Initialize on Page Load
+    fetchInstalledApps();
+</script>
+</body>
+</html>

@@ -17,16 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from LoRa2Server import views
+from helmet import views
 
+app_name = 'helmet'
 urlpatterns = [
-    path('admin/', admin.site.urls),
-
     path('', views.index, name='index'),
-    path('port/', views.set_port, name='set_port'),
-    path('fetch-logs/', views.fetch_logs, name='fetch_logs'),
-    path('installed-apps/', views.get_installed_apps, name='get_installed_apps'),
-    path('config/', views.update_config, name='update_config'),
-    path('start/', views.start, name='start'),
-    path('helmet/', include('helmet.urls')),
 ]
