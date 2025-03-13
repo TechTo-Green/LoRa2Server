@@ -1,0 +1,2 @@
+2025-03-13 14:16:39,420 - ERROR - Port detection failed: module 'serial' has no attribute 'tools'
+2025-03-13 14:16:41,173 - ERROR - Port detection failed: module 'serial' has no attribute 'tools'

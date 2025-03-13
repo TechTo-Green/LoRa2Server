@@ -3,156 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LoRa App</title>
+    <title>LoRa Configuration Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 text-white font-sans min-h-screen flex items-center justify-center">
-<div class="container mx-auto p-8 bg-gray-800 rounded-lg shadow-lg">
+<div class="container mx-auto p-8 bg-gray-800 rounded-lg shadow-lg max-w-2xl">
     <!-- Title -->
-    <h1 class="text-4xl font-bold text-center mb-8 text-teal-400">LoRa to Server App</h1>
+    <h1 class="text-4xl font-bold text-center mb-8 text-teal-400">LoRa Data Gateway</h1>
 
-    <!-- Dropdown for Installed Apps -->
-    <div class="mb-6">
-        <label for="apps" class="block text-lg font-medium mb-2">Select Installed App:</label>
-        <select id="apps"
-                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring focus:ring-teal-500">
-            <option value="" disabled selected>Loading apps...</option>
-        </select>
-    </div>
-
-    <!-- Port Status Section -->  <!-- MOVED HERE -->
-        <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-4">Port Status</h2>
-            <div id="port" class="border border-gray-600 bg-gray-700 p-4 rounded shadow-md"></div>
+    <!-- Status Indicators -->
+    <div class="grid grid-cols-2 gap-4 mb-8">
+        <div class="border border-gray-600 bg-gray-700 p-4 rounded">
+            <h3 class="text-lg font-semibold mb-2">Serial Port</h3>
+            <div id="portStatus" class="flex items-center">
+                <span class="status-dot mr-2"></span>
+                <span id="portValue">Not detected</span>
+            </div>
         </div>
-
-
-    <!-- Buttons -->
-    <div class="flex justify-center space-x-4 mb-8">
-        <button onclick="startFunction()"
-                class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-6 rounded shadow transition ease-in-out duration-200">
-            Start
-        </button>
-        <button onclick="setPort()"
-                class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded shadow transition ease-in-out duration-200">
-            Detect Port
-        </button>
+        <div class="border border-gray-600 bg-gray-700 p-4 rounded">
+            <h3 class="text-lg font-semibold mb-2">Service Status</h3>
+            <div id="serviceStatus" class="flex items-center">
+                <span class="status-dot mr-2"></span>
+                <span>Inactive</span>
+            </div>
+        </div>
     </div>
-
-    <!-- Logs Section -->
-    <h2 class="text-xl font-semibold mb-4">Logs</h2>
-    <button onclick="fetchLogs()"
-            class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded shadow transition ease-in-out duration-200">
-        Fetch Logs
-    </button>
-    <div id="logs" class="border border-gray-600 bg-gray-700 p-4 rounded shadow-md h-48 overflow-y-scroll mt-4"></div>
 
     <!-- Configuration Section -->
-    <h2 class="text-xl font-semibold mt-8 mb-4">Update Configuration</h2>
-    <!-- EXP_KEYS -->
-    <label for="exp_keys" class="block text-lg font-medium mb-2">Expected Keys (comma-separated):</label>
-    <input id="exp_keys" type="text" placeholder="temp,lat,lon,alt,heading"
-           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring focus:ring-teal-500 mb-4">
+    <div class="space-y-6">
+        <div>
+            <label for="exp_keys" class="block text-sm font-medium mb-2">Data Keys (comma-separated)</label>
+            <input id="exp_keys" type="text"
+                   value="{{ EXP_KEYS|join:', ' }}"
+                   placeholder="temperature,latitude,longitude"
+                   class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-teal-500">
+        </div>
 
-    <!-- HOST -->
-    <label for="host" class="block text-lg font-medium mb-2">Host URL:</label>
-    <input id="host" type="text" placeholder="http://localhost:8000"
-           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring focus:ring-teal-500 mb-4">
+        <div>
+            <label for="host" class="block text-sm font-medium mb-2">API Endpoint</label>
+            <input id="host" type="url"
+                   value="{{ HOST }}"
+                   placeholder="https://api.example.com/lora"
+                   class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-teal-500"
+                   pattern="https?://.+">
+        </div>
 
-    <!-- BAUD_RATE -->
-    <label for="baud_rate" class="block text-lg font-medium mb-2">Baud Rate:</label>
-    <input id="baud_rate" type="number" placeholder="115200"
-           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring focus:ring-teal-500 mb-4">
+        <div>
+            <label for="baud_rate" class="block text-sm font-medium mb-2">Baud Rate</label>
+            <select id="baud_rate"
+                    class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-teal-500">
+                <option value="9600" {% if BAUD_RATE == 9600 %}selected{% endif %}>9600</option>
+                <option value="115200" {% if BAUD_RATE == 115200 %}selected{% endif %}>115200</option>
+                <option value="230400" {% if BAUD_RATE == 230400 %}selected{% endif %}>230400</option>
+            </select>
+        </div>
+    </div>
 
-    <!-- Update Button -->
-    <button onclick="updateConfig()"
-            class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-6 rounded shadow transition ease-in-out duration-200">
-        Update Configuration
-    </button>
+    <!-- Action Buttons -->
+    <div class="flex justify-between mt-8">
+        <button onclick="handlePortDetection()"
+                class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors">
+            Detect Hardware
+        </button>
+        <div class="space-x-4">
+            <button onclick="updateConfiguration()"
+                    class="px-6 py-2 bg-teal-600 hover:bg-teal-700 rounded-md transition-colors">
+                Save Settings
+            </button>
+            <button onclick="startDataPipeline()"
+                    class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors">
+                Start Service
+            </button>
+        </div>
+    </div>
 
+    <!-- System Notifications -->
+    <div id="notification" class="mt-6 hidden p-4 rounded"></div>
 </div>
 
-<!-- JavaScript -->
 <script>
-    // Fetch Installed Apps on Page Load
-    async function fetchInstalledApps() {
+    // UI State Management
+    const state = {
+        port: '{{ serial_port }}' || null,
+        serviceActive: false
+    };
+
+    // DOM Elements
+    const notification = document.getElementById('notification');
+    const portStatus = document.getElementById('portStatus');
+    const serviceStatus = document.getElementById('serviceStatus');
+
+    // Notification System
+    function showNotification(message, type = 'info') {
+        notification.className = `mt-6 p-4 rounded bg-${type}-500/20 border border-${type}-500`;
+        notification.textContent = message;
+        notification.classList.remove('hidden');
+        setTimeout(() => notification.classList.add('hidden'), 5000);
+    }
+
+    // Enhanced Configuration Update
+    async function updateConfiguration() {
+        const payload = {
+            EXP_KEYS: document.getElementById('exp_keys').value.split(',').map(k => k.trim()),
+            HOST: document.getElementById('host').value,
+            BAUD_RATE: parseInt(document.getElementById('baud_rate').value)
+        };
+
         try {
-            const response = await axios.get('/installed-apps/');
-            const appsDropdown = document.getElementById('apps');
-            appsDropdown.innerHTML = ''; // Clear existing options
-            response.data.apps.forEach(app => {
-                const option = document.createElement('option');
-                option.value = app;
-                option.textContent = app;
-                appsDropdown.appendChild(option);
-            });
+            const {data} = await axios.post('/config/', payload);
+            showNotification(data.message, 'success');
         } catch (error) {
-            console.error('Error fetching installed apps:', error);
-            document.getElementById('apps').innerHTML = `<option value="" disabled>Error loading apps</option>`;
+            showNotification(error.response?.data?.error || 'Configuration update failed', 'error');
         }
     }
 
-    // Start Function
-    async function startFunction() {
+    // Hardware Detection
+    async function handlePortDetection() {
         try {
-            const response = await axios.get('/start/');
-            document.getElementById('logs').innerHTML += `<p>${response.data.message}</p>`;
+            showNotification('Detecting hardware...', 'info');
+            const {data} = await axios.post('/port/');
+
+            // Update port state and UI
+            state.port = data.port;
+            portStatus.querySelector('#portValue').textContent = data.port;
+
+            // Change status dot color to green
+            const statusDot = portStatus.querySelector('.status-dot');
+            statusDot.style.backgroundColor = '#10b981'; // Tailwind's green-500 color
+
+            showNotification('Port successfully detected', 'success');
         } catch (error) {
-            console.error(error);
-            document.getElementById('logs').innerHTML += `<p>Error: Unable to start function</p>`;
+            showNotification('Hardware detection failed', 'error');
         }
     }
 
-    // Set Port Function
-    async function setPort() {
-        document.getElementById('port').innerHTML = `<p>Detecting... Plug in the transmitter.</p>`;
-        try {
-            const response = await axios.post('/port/');
-            document.getElementById('port').innerText = `Port: ${response.data.port}`;
-        } catch (error) {
-            console.error(error);
-            document.getElementById('port').innerText = `Error: Unable to set port`;
-        }
-    }
 
-    // Fetch Logs Function
-    async function fetchLogs() {
-        const logsContainer = document.getElementById('logs');
-        logsContainer.innerHTML = '<p>Loading logs...</p>';
-
+    // Service Control
+    async function startDataPipeline() {
         try {
-            const response = await axios.get('/fetch-logs/');
-            if (response.data.logs) {
-                logsContainer.innerHTML = response.data.logs.map(log => `<p>${log}</p>`).join('');
-            } else {
-                logsContainer.innerHTML = `<p>${response.data.error}</p>`;
+            const {status} = await axios.get('/start/');
+            if (!!state.port && status === 200) {
+                state.serviceActive = true;
+                serviceStatus.children[1].textContent = 'Active';
+                serviceStatus.children[0].style.backgroundColor = '#10b981';
+
+                showNotification('Data pipeline started successfully', 'success');
             }
         } catch (error) {
-            console.error('Error fetching logs:', error);
-            logsContainer.innerHTML = '<p>Error fetching logs.</p>';
+            const message = error.response?.data?.error || 'Service initialization failed';
+            showNotification(message, 'error');
         }
     }
 
-    // Update Configuration Function
-    async function updateConfig() {
-        const expKeys = document.getElementById('exp_keys').value.split(',').map(key => key.trim());
-        const host = document.getElementById('host').value;
-        const baudRate = document.getElementById('baud_rate').value;
-
-        const payload = { EXP_KEYS: expKeys, HOST: host, BAUD_RATE: baudRate };
-
-        try {
-            const response = await axios.post('/config/', payload, { headers: { 'Content-Type': 'application/json' } });
-            alert(response.data.message);
-        } catch (error) {
-            console.error('Error updating configuration:', error);
-            alert('Failed to update configuration.');
+    // Initial Setup
+    window.addEventListener('DOMContentLoaded', () => {
+        if (state.port) {
+            portStatus.querySelector('#portValue').textContent = state.port;
         }
-    }
-
-    // Initialize on Page Load
-    fetchInstalledApps();
+    });
 </script>
+
+<style>
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #6b7280;
+    }
+
+    .status-dot[data-active] {
+        background-color: #10b981;
+    }
+</style>
 </body>
 </html>

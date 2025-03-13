@@ -17,9 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
+from . import views
 
-    path('helmet/', include('helmet.urls')),
-    path('', include('lora.urls')),
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('port/', views.set_port, name='set_port'),
+    path('installed-apps/', views.get_installed_apps, name='get_installed_apps'),
+    path('config/', views.update_config, name='update_config'),
+    path('start/', views.start, name='start'),
 ]
