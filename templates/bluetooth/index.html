@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bluetooth Data Logger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: #121212;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2em;
+        }
+
+        button {
+            font-size: 1.2em;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        #startBtn {
+            background-color: #28a745;
+            color: white;
+        }
+
+        #startBtn:hover {
+            background-color: #218838;
+        }
+
+        #stopBtn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        #stopBtn:hover {
+            background-color: #c82333;
+        }
+
+        #status {
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Bluetooth Data Logger</h1>
+
+    <button id="startBtn" onclick="startBluetooth()">Start Bluetooth</button>
+    <button id="stopBtn" onclick="stopBluetooth()">Stop Bluetooth</button>
+
+    <p id="status">Status: <span id="statusText">Idle</span></p>
+
+    <script>
+        function startBluetooth() {
+            fetch('/bluetooth/start/', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('statusText').innerText = data.status;
+                    alert('✅ Bluetooth started!');
+                })
+                .catch(error => {
+                    document.getElementById('statusText').innerText = 'Error';
+                    alert('❌ Error starting Bluetooth');
+                    console.error(error);
+                });
+        }
+
+        function stopBluetooth() {
+            fetch('/bluetooth/stop/', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('statusText').innerText = data.status;
+                    alert('🛑 Bluetooth stopped!');
+                })
+                .catch(error => {
+                    document.getElementById('statusText').innerText = 'Error';
+                    alert('❌ Error stopping Bluetooth');
+                    console.error(error);
+                });
+        }
+    </script>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class HelmetConfig(AppConfig):
+class BluetoothConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'helmet'
+    name = 'bluetooth'

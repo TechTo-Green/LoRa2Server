@@ -37,8 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "helmet.apps.HelmetConfig",
-    "lora.apps.LoraConfig"
+    "lora.apps.LoraConfig",
+    "bluetooth.apps.BluetoothConfig"
 ]
 
 MIDDLEWARE = [
