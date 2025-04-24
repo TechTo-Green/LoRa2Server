@@ -215,25 +215,49 @@
             color: var(--error);
         }
 
-        .test-button {
-            padding: 6px 12px;
-            border-radius: 4px;
+        .data-display {
+            background-color: var(--background);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .data-item {
+            background-color: var(--card);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-label {
             font-size: 12px;
-            font-weight: 500;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            color: var(--text-light);
+            margin-bottom: 4px;
         }
 
-        .test-button:hover {
-            background-color: var(--primary-hover);
+        .data-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
         }
 
-        .test-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .raw-data {
+            margin-top: 16px;
+            background-color: var(--card);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--text);
+            white-space: pre-wrap;
+            word-break: break-all;
         }
 
         .toast {
@@ -285,125 +309,6 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
-        .port-testing-section {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .port-testing-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .port-test-result {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-
-        .port-test-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .port-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #6c757d;
-        }
-
-        .status-indicator.active {
-            background: #28a745;
-        }
-
-        .status-indicator.error {
-            background: #dc3545;
-        }
-
-        .port-test-details {
-            display: grid;
-            gap: 20px;
-        }
-
-        .port-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .info-label {
-            font-size: 0.9em;
-            color: #6c757d;
-        }
-
-        .info-value {
-            font-weight: 500;
-        }
-
-        .raw-data-section, .parsed-data-section {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-        }
-
-        .raw-data-container {
-            background: #1e1e1e;
-            color: #fff;
-            padding: 15px;
-            border-radius: 4px;
-            font-family: monospace;
-            overflow-x: auto;
-        }
-
-        .parsed-data-container {
-            margin-top: 10px;
-        }
-
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .data-item {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .data-label {
-            font-size: 0.9em;
-            color: #6c757d;
-        }
-
-        .data-value {
-            font-weight: 500;
-            font-size: 1.1em;
-        }
     </style>
 </head>
 <body>
@@ -436,14 +341,14 @@
         <div class="section">
             <div class="section-title">Connection Control</div>
             <div class="button-group">
-                <button id="startBtn">
+                <button id="startBtn" onclick="startBluetooth()">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Start
                 </button>
-                <button id="stopBtn">
+                <button id="stopBtn" onclick="stopBluetooth()">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
@@ -460,63 +365,52 @@
             </div>
         </div>
 
-        <div class="port-testing-section">
-            <h3>Port Testing</h3>
-            <div class="port-testing-container">
-                <div id="portTestResult" class="port-test-result">
-                    <div class="port-test-header">
-                        <h4>Port Test Results</h4>
-                        <div class="port-status">
-                            <span class="status-indicator"></span>
-                            <span class="status-text">Not tested</span>
-                        </div>
+        <div class="section">
+            <div class="section-title">Live Data</div>
+            <div class="data-display">
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-label">Latitude</div>
+                        <div class="data-value" id="latitude">-</div>
                     </div>
-                    <div class="port-test-details">
-                        <div class="port-info">
-                            <div class="info-item">
-                                <span class="info-label">Device:</span>
-                                <span class="info-value" id="portDevice">-</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Description:</span>
-                                <span class="info-value" id="portDescription">-</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">HWID:</span>
-                                <span class="info-value" id="portHwid">-</span>
-                            </div>
-                        </div>
-                        <div class="raw-data-section">
-                            <h5>Raw Data</h5>
-                            <div class="raw-data-container">
-                                <pre id="rawDataDisplay">No data received</pre>
-                            </div>
-                        </div>
-                        <div class="parsed-data-section">
-                            <h5>Parsed Data</h5>
-                            <div class="parsed-data-container">
-                                <div class="data-grid">
-                                    <div class="data-item">
-                                        <span class="data-label">Latitude:</span>
-                                        <span class="data-value" id="parsedLat">-</span>
-                                    </div>
-                                    <div class="data-item">
-                                        <span class="data-label">Longitude:</span>
-                                        <span class="data-value" id="parsedLng">-</span>
-                                    </div>
-                                    <div class="data-item">
-                                        <span class="data-label">Temperature:</span>
-                                        <span class="data-value" id="parsedTemp">-</span>
-                                    </div>
-                                    <div class="data-item">
-                                        <span class="data-label">Yaw:</span>
-                                        <span class="data-value" id="parsedYaw">-</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="data-item">
+                        <div class="data-label">Longitude</div>
+                        <div class="data-value" id="longitude">-</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Altitude</div>
+                        <div class="data-value" id="altitude">-</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Speed</div>
+                        <div class="data-value" id="speed">-</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Temperature</div>
+                        <div class="data-value" id="temperature">-</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Bearing</div>
+                        <div class="data-value" id="bearing">-</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Distance 1</div>
+                        <div class="data-value" id="distance1">-</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Distance 2</div>
+                        <div class="data-value" id="distance2">-</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Distance 3</div>
+                        <div class="data-value" id="distance3">-</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Satellite Count</div>
+                        <div class="data-value" id="satelliteCount">-</div>
                     </div>
                 </div>
+                <div class="raw-data" id="rawData">No data received</div>
             </div>
         </div>
     </div>
@@ -526,7 +420,7 @@
     <script>
         let isRunning = false;
         let currentPort = null;
-        let autoRefreshInterval = null;
+        let dataRefreshInterval = null;
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const scanBtn = document.getElementById('scanBtn');
@@ -554,37 +448,43 @@
             stopBtn.disabled = !isActive;
         }
 
-        function startAutoRefresh() {
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-            }
-            autoRefreshInterval = setInterval(async () => {
-                if (currentPort) {
-                    try {
-                        const response = await fetch('/bluetooth/test-port/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': getCookie('csrftoken')
-                            },
-                            body: JSON.stringify({ port: currentPort })
-                        });
+        function updateDataDisplay(data) {
+            document.getElementById('latitude').textContent = data.latitude || '-';
+            document.getElementById('longitude').textContent = data.longitude || '-';
+            document.getElementById('altitude').textContent = data.altitude ? `${data.altitude}m` : '-';
+            document.getElementById('speed').textContent = data.speed ? `${data.speed} m/s` : '-';
+            document.getElementById('temperature').textContent = data.temperature ? `${data.temperature}°C` : '-';
+            document.getElementById('bearing').textContent = data.bearing ? `${data.bearing}°` : '-';
+            document.getElementById('distance1').textContent = data.distance1 ? `${data.distance1}m` : '-';
+            document.getElementById('distance2').textContent = data.distance2 ? `${data.distance2}m` : '-';
+            document.getElementById('distance3').textContent = data.distance3 ? `${data.distance3}m` : '-';
+            document.getElementById('satelliteCount').textContent = data.satellite_count || '-';
+            document.getElementById('rawData').textContent = data.raw_data || 'No data received';
+        }
 
-                        if (response.ok) {
-                            const result = await response.json();
-                            updatePortTestResult(result);
+        function startDataRefresh() {
+            if (dataRefreshInterval) {
+                clearInterval(dataRefreshInterval);
+            }
+            dataRefreshInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/bluetooth/get-latest-data/');
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.status === 'success') {
+                            updateDataDisplay(result.data);
                         }
-                    } catch (error) {
-                        console.error('Error refreshing port data:', error);
                     }
+                } catch (error) {
+                    console.error('Error refreshing data:', error);
                 }
             }, 1000); // Refresh every 1 second
         }
 
-        function stopAutoRefresh() {
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
+        function stopDataRefresh() {
+            if (dataRefreshInterval) {
+                clearInterval(dataRefreshInterval);
+                dataRefreshInterval = null;
             }
         }
 
@@ -627,110 +527,17 @@
                         </span>
                     </td>
                     <td>
-                        <button class="test-button" onclick="testPort('${port.device}')" ${port.is_connected ? 'disabled' : ''}>
-                            Test
+                        <button class="test-button" onclick="selectPort('${port.device}')">
+                            Select
                         </button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        async function testPort(portName, isAutoRefresh = false) {
+        function selectPort(portName) {
             currentPort = portName;
-            const testBtn = event?.target;
-            
-            if (!isAutoRefresh && testBtn) {
-                const originalText = testBtn.innerHTML;
-                testBtn.disabled = true;
-                testBtn.innerHTML = '<span class="loading"></span> Testing...';
-            }
-
-            try {
-                const response = await fetch('/bluetooth/test-port/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({ port: portName })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const result = await response.json();
-                updatePortTestResult(result);
-
-                if (!isAutoRefresh) {
-                    if (result.success) {
-                        showToast('Port test successful', 'success');
-                    } else {
-                        showToast(result.message || 'Port test failed', 'error');
-                    }
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                if (!isAutoRefresh) {
-                    showToast('Error testing port: ' + (error.message || 'Unknown error'), 'error');
-                }
-                updatePortTestResult({
-                    success: false,
-                    message: 'Error testing port',
-                    port_info: {
-                        device: portName,
-                        description: '',
-                        hwid: ''
-                    },
-                    raw_data: null,
-                    data: null
-                });
-            } finally {
-                if (!isAutoRefresh && testBtn) {
-                    testBtn.disabled = false;
-                    testBtn.innerHTML = 'Test';
-                }
-            }
-        }
-
-        function updatePortTestResult(result) {
-            const resultContainer = document.getElementById('portTestResult');
-            const statusIndicator = resultContainer.querySelector('.status-indicator');
-            const statusText = resultContainer.querySelector('.status-text');
-            const portDevice = document.getElementById('portDevice');
-            const portDescription = document.getElementById('portDescription');
-            const portHwid = document.getElementById('portHwid');
-            const rawDataDisplay = document.getElementById('rawDataDisplay');
-            const parsedLat = document.getElementById('parsedLat');
-            const parsedLng = document.getElementById('parsedLng');
-            const parsedTemp = document.getElementById('parsedTemp');
-            const parsedYaw = document.getElementById('parsedYaw');
-
-            portDevice.textContent = result.port_info?.device || '-';
-            portDescription.textContent = result.port_info?.description || '-';
-            portHwid.textContent = result.port_info?.hwid || '-';
-
-            if (result.success) {
-                statusIndicator.className = 'status-indicator active';
-                statusText.textContent = 'Port is transmitting data';
-            } else {
-                statusIndicator.className = 'status-indicator error';
-                statusText.textContent = result.message || 'Test failed';
-            }
-
-            rawDataDisplay.textContent = result.raw_data || 'No data received';
-
-            if (result.data) {
-                parsedLat.textContent = result.data.latitude || '-';
-                parsedLng.textContent = result.data.longitude || '-';
-                parsedTemp.textContent = result.data.temperature ? `${result.data.temperature}°C` : '-';
-                parsedYaw.textContent = result.data.yaw ? `${result.data.yaw}°` : '-';
-            } else {
-                parsedLat.textContent = '-';
-                parsedLng.textContent = '-';
-                parsedTemp.textContent = '-';
-                parsedYaw.textContent = '-';
-            }
+            showToast(`Selected port: ${portName}`, 'success');
         }
 
         async function startBluetooth() {
@@ -740,11 +547,13 @@
             }
 
             try {
-                const response = await fetch('/bluetooth/start/', { 
+                const response = await fetch('/bluetooth/start/', {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken')
-                    }
+                    },
+                    body: JSON.stringify({ port: currentPort })
                 });
                 const data = await response.json();
                 
@@ -752,7 +561,7 @@
                     isRunning = true;
                     updateStatus(true, 'Running');
                     showToast('Bluetooth started successfully', 'success');
-                    startAutoRefresh();
+                    startDataRefresh();
                 } else {
                     showToast(data.message || 'Error starting Bluetooth', 'error');
                 }
@@ -764,7 +573,7 @@
 
         async function stopBluetooth() {
             try {
-                const response = await fetch('/bluetooth/stop/', { 
+                const response = await fetch('/bluetooth/stop/', {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': getCookie('csrftoken')
@@ -776,7 +585,7 @@
                     isRunning = false;
                     updateStatus(false, 'Stopped');
                     showToast('Bluetooth stopped successfully', 'success');
-                    stopAutoRefresh();
+                    stopDataRefresh();
                 } else {
                     showToast(data.message || 'Error stopping Bluetooth', 'error');
                 }
@@ -803,10 +612,9 @@
 
         updateStatus(false, 'Idle');
         scanPorts();
-        startAutoRefresh();
 
         window.addEventListener('beforeunload', () => {
-            stopAutoRefresh();
+            stopDataRefresh();
         });
     </script>
 </body>

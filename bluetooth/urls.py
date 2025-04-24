@@ -1,10 +1,11 @@
 from django.urls import path
-from .views import start_bluetooth_listener, stop_bluetooth_listener, index, get_available_ports, test_port
+from . import views
 
 urlpatterns = [
-    path('start/', start_bluetooth_listener, name='start_bluetooth'),
-    path('stop/', stop_bluetooth_listener, name='stop_bluetooth'),
-    path('ports/', get_available_ports, name='get_ports'),
-    path('test-port/', test_port, name='test_port'),
-    path('', index, name='bluetooth_index'),
+    path('get-latest-data/', views.get_latest_data, name='get_latest_data'),
+    path('start/', views.start_bluetooth_listener, name='start_bluetooth'),
+    path('stop/', views.stop_bluetooth_listener, name='stop_bluetooth'),
+    path('ports/', views.get_available_ports, name='get_ports'),
+    path('test-port/', views.test_port, name='test_port'),
+    path('', views.index, name='bluetooth_index'),
 ]

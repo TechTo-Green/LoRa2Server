@@ -43,7 +43,14 @@ class BluetoothData:
     longitude: float
     altitude: float
     speed: float
-    timestamp: datetime
+    bearing: Optional[float] = None
+    temperature: Optional[float] = None
+    distance1: Optional[float] = None
+    distance2: Optional[float] = None
+    distance3: Optional[float] = None
+    satellite_count: Optional[int] = None
+    timestamp: datetime = datetime.now()
+    raw_data: Optional[str] = None
 
 @dataclass
 class PortInfo:
@@ -62,6 +69,7 @@ class BluetoothManager:
         self.last_data: Optional[BluetoothData] = None
         self.last_send_time = 0
         self.current_port = None
+        self.data_history: List[BluetoothData] = []
         self.testing_port = False
 
     def get_available_ports(self) -> List[PortInfo]:
@@ -116,13 +124,13 @@ class BluetoothManager:
                                 if parsed_data:
                                     # Extract additional data if available
                                     temp_match = re.search(r"Temp:([-0-9.]+)C", raw_data)
-                                    yaw_match = re.search(r"yaw:([-0-9.]+)", raw_data)
+                                    bearing_match = re.search(r"bearing:([-0-9.]+)", raw_data)
                                     
                                     result["data"] = {
                                         "latitude": parsed_data.latitude,
                                         "longitude": parsed_data.longitude,
                                         "temperature": float(temp_match.group(1)) if temp_match else None,
-                                        "yaw": float(yaw_match.group(1)) if yaw_match else None
+                                        "bearing": float(bearing_match.group(1)) if bearing_match else None
                                     }
                             except Exception as e:
                                 print(f"⚠️ Parsing error: {e}")
@@ -143,71 +151,79 @@ class BluetoothManager:
         """Establish Bluetooth connection with retries."""
         for attempt in range(MAX_RETRIES):
             try:
-                print(f"🔄 Connecting to {BLUETOOTH_PORT} (Attempt {attempt + 1}/{MAX_RETRIES})...")
-                return serial.Serial(BLUETOOTH_PORT, BAUD_RATE, timeout=1)
+                print(f"🔄 Connecting to {self.current_port} (Attempt {attempt + 1}/{MAX_RETRIES})...")
+                return serial.Serial(self.current_port, BAUD_RATE, timeout=1)
             except serial.SerialException as e:
                 print(f"❌ Connection Error: {e}")
                 time.sleep(RETRY_DELAY)
         return None
 
-    def parse_data(self, line: str) -> Optional[BluetoothData]:
-        """Parse incoming data with validation."""
+    def parse_data(self, raw_data: str) -> Optional[BluetoothData]:
+        """Parse the incoming data into a structured format."""
         try:
-            # Format 1: Lat, Lon, Alt, Speed
-            pattern1 = r"Lat:([-0-9.]+),Lon:([-0-9.]+),Alt:([-0-9.]+),Speed:([-0-9.]+)"
-            match1 = re.search(pattern1, line)
+            print(f"📝 Raw data received: {raw_data}")
+            # Remove 'Sent: ' prefix if present
+            data = raw_data.replace('Sent: ', '')
+            print(f"📝 Cleaned data: {data}")
             
-            if match1:
-                return BluetoothData(
-                    latitude=float(match1.group(1)),
-                    longitude=float(match1.group(2)),
-                    altitude=float(match1.group(3)),
-                    speed=float(match1.group(4)),
-                    timestamp=datetime.now()
-                )
-
-            # Format 2: GPS, Alt, Yaw, Temp
-            pattern2 = r"GPS:\s([-0-9.]+),\s([-0-9.]+)\sAlt:\s([-0-9.]+)m"
-            match2 = re.search(pattern2, line)
+            # Try different patterns to match the data format
+            patterns = [
+                # Format: Lat:22.5726,Lng:88.3639,4,Temp:28.39C,yaw:337.41,1,0,1,0
+                r"Lat:([-0-9.]+),Lng:([-0-9.]+),([0-9.]+),Temp:([-0-9.]+)C,yaw:([-0-9.]+),([0-9.]+),([0-9.]+),([0-9.]+),([0-9.]+)",
+                # Format 2: GPS:22.5726,88.3639 Alt:100m
+                r"GPS:\s*([-0-9.]+),\s*([-0-9.]+)\s*Alt:\s*([-0-9.]+)m",
+                # Format 3: Lat, Lon, Alt, Speed
+                r"Lat:([-0-9.]+),Lon:([-0-9.]+),Alt:([-0-9.]+),Speed:([-0-9.]+)"
+            ]
             
-            if match2:
-                return BluetoothData(
-                    latitude=float(match2.group(1)),
-                    longitude=float(match2.group(2)),
-                    altitude=float(match2.group(3)),
-                    speed=0.0,
-                    timestamp=datetime.now()
-                )
-
-            # Format 3: Lat:22.5726,Lng:88.3639,4,Temp:28.39C,yaw:337.41,1,0,1,0
-            pattern3 = r"Lat:([-0-9.]+),Lng:([-0-9.]+).*?Temp:([-0-9.]+)C.*?yaw:([-0-9.]+)"
-            match3 = re.search(pattern3, line)
+            for i, pattern in enumerate(patterns):
+                print(f"🔍 Trying pattern {i+1}: {pattern}")
+                match = re.search(pattern, data)
+                if match:
+                    print(f"✅ Pattern {i+1} matched!")
+                    print(f"📊 Match groups: {match.groups()}")
+                    groups = match.groups()
+                    if len(groups) >= 4:
+                        # Extract values based on the matched pattern
+                        if i == 0:  # Main format
+                            parsed_data = BluetoothData(
+                                latitude=float(groups[0]),
+                                longitude=float(groups[1]),
+                                altitude=float(groups[2]),
+                                speed=None,  # yaw value is actually speed
+                                temperature=float(groups[3]),
+                                bearing=float(groups[4]),  # No bearing in this format
+                                distance1=float(groups[5]),
+                                distance2=float(groups[6]),
+                                distance3=float(groups[7]),
+                                satellite_count=int(groups[8]),
+                                raw_data=raw_data
+                            )
+                        else:
+                            parsed_data = BluetoothData(
+                                latitude=float(groups[0]),
+                                longitude=float(groups[1]),
+                                altitude=float(groups[2]),
+                                speed=float(groups[3]) if len(groups) > 3 else 0.0,
+                                temperature=None,
+                                bearing=None,
+                                distance1=None,
+                                distance2=None,
+                                distance3=None,
+                                satellite_count=None,
+                                raw_data=raw_data
+                            )
+                        print(f"📊 Parsed data: {parsed_data}")
+                        return parsed_data
+                else:
+                    print(f"❌ Pattern {i+1} did not match")
             
-            if match3:
-                return BluetoothData(
-                    latitude=float(match3.group(1)),
-                    longitude=float(match3.group(2)),
-                    altitude=0.0,  # Not provided in this format
-                    speed=0.0,     # Not provided in this format
-                    timestamp=datetime.now()
-                )
-
-            # Format 4: Alternative format with different separators
-            pattern4 = r"Lat:([-0-9.]+)\s*,\s*Lng:([-0-9.]+)\s*,\s*Temp:([-0-9.]+)C\s*,\s*Yaw:([-0-9.]+)"
-            match4 = re.search(pattern4, line)
-            
-            if match4:
-                return BluetoothData(
-                    latitude=float(match4.group(1)),
-                    longitude=float(match4.group(2)),
-                    altitude=0.0,  # Not provided in this format
-                    speed=0.0,     # Not provided in this format
-                    timestamp=datetime.now()
-                )
-
+            print("⚠️ No patterns matched the data")
             return None
-        except (ValueError, AttributeError) as e:
-            print(f"⚠️ Parsing error: {e}")
+        except Exception as e:
+            print(f"❌ Parsing error: {e}")
+            import traceback
+            print(f"📝 Error details: {traceback.format_exc()}")
             return None
 
     def send_to_api(self, data: BluetoothData) -> bool:
@@ -217,6 +233,12 @@ class BluetoothManager:
             "longitude": data.longitude,
             "altitude": data.altitude,
             "speed": data.speed,
+            "bearing": data.bearing,
+            "temperature": data.temperature,
+            "distance1": data.distance1,
+            "distance2": data.distance2,
+            "distance3": data.distance3,
+            "satellite_count": data.satellite_count,
             "timestamp": data.timestamp.isoformat()
         }
 
@@ -244,28 +266,45 @@ class BluetoothManager:
 
     def listener(self):
         """Main Bluetooth listener loop."""
+        print("🎧 Starting Bluetooth listener loop")
         while self.running:
             try:
                 if not self.connection or not self.connection.is_open:
+                    print("🔌 Connection not open, attempting to connect...")
                     self.connection = self.connect()
                     if not self.connection:
+                        print("❌ Failed to connect, retrying...")
                         time.sleep(RETRY_DELAY)
                         continue
+                    print("✅ Connection established")
 
                 if self.connection.in_waiting:
+                    print("📥 Data available, reading...")
                     raw_data = self.connection.readline().decode(errors='replace').strip()
+                    print(f"📝 Raw data received: {raw_data}")
+                    
                     parsed_data = self.parse_data(raw_data)
+                    print(f"📊 Parsed data result: {parsed_data}")
 
                     if parsed_data:
                         with self.lock:
+                            print("🔒 Acquired lock, updating data...")
                             self.last_data = parsed_data
-                            print(f"📊 New data: {raw_data}")
+                            self.data_history.append(parsed_data)
+                            # Keep only last 100 data points
+                            if len(self.data_history) > 100:
+                                self.data_history.pop(0)
+                            print(f"📊 Data updated. History size: {len(self.data_history)}")
 
                 # Send data at regular intervals
                 current_time = time.time()
                 if self.last_data and (current_time - self.last_send_time) >= SEND_INTERVAL:
+                    print("⏰ Time to send data to API...")
                     if self.send_to_api(self.last_data):
                         self.last_send_time = current_time
+                        print("✅ Data sent to API successfully")
+                    else:
+                        print("❌ Failed to send data to API")
 
                 time.sleep(0.1)
 
@@ -276,17 +315,18 @@ class BluetoothManager:
                 self.connection = None
                 time.sleep(RETRY_DELAY)
 
-    def start(self):
+    def start(self, port_name: str) -> bool:
         """Start the Bluetooth listener thread."""
         if self.running:
             return False
         
+        self.current_port = port_name
         self.running = True
         self.thread = threading.Thread(target=self.listener, daemon=True)
         self.thread.start()
         return True
 
-    def stop(self):
+    def stop(self) -> bool:
         """Stop the Bluetooth listener thread."""
         if not self.running:
             return False
@@ -298,22 +338,83 @@ class BluetoothManager:
             self.connection.close()
         return True
 
+    def get_latest_data(self) -> Optional[Dict[str, Any]]:
+        """Get the latest data point."""
+        print("🔍 Getting latest data...")
+        with self.lock:
+            if self.last_data:
+                print(f"📊 Latest data available: {self.last_data}")
+                return {
+                    "latitude": self.last_data.latitude,
+                    "longitude": self.last_data.longitude,
+                    "altitude": self.last_data.altitude,
+                    "speed": self.last_data.speed,
+                    "bearing": self.last_data.bearing,
+                    "temperature": self.last_data.temperature,
+                    "distance1": self.last_data.distance1,
+                    "distance2": self.last_data.distance2,
+                    "distance3": self.last_data.distance3,
+                    "satellite_count": self.last_data.satellite_count,
+                    "timestamp": self.last_data.timestamp.isoformat(),
+                    "raw_data": self.last_data.raw_data
+                }
+            print("⚠️ No latest data available")
+            return None
+
 # Global Bluetooth manager instance
 bluetooth_manager = BluetoothManager()
 
 @csrf_exempt
 def start_bluetooth_listener(request):
     """API endpoint to start Bluetooth listener."""
-    if bluetooth_manager.start():
-        return JsonResponse({"status": "started", "message": "Bluetooth listener started successfully"})
-    return JsonResponse({"status": "error", "message": "Bluetooth listener is already running"}, status=400)
+    print("🔍 start_bluetooth_listener view called")
+    if request.method != 'POST':
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        port_name = data.get('port')
+        print(f"📡 Starting Bluetooth listener on port: {port_name}")
+        if not port_name:
+            return JsonResponse({"error": "Port name is required"}, status=400)
+        
+        if bluetooth_manager.start(port_name):
+            print("✅ Bluetooth listener started successfully")
+            return JsonResponse({"status": "started", "message": "Bluetooth listener started successfully"})
+        print("⚠️ Bluetooth listener is already running")
+        return JsonResponse({"status": "error", "message": "Bluetooth listener is already running"}, status=400)
+    except json.JSONDecodeError:
+        print("❌ Invalid JSON in request")
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except Exception as e:
+        print(f"❌ Error starting Bluetooth listener: {e}")
+        return JsonResponse({"error": str(e)}, status=500)
 
 @csrf_exempt
 def stop_bluetooth_listener(request):
     """API endpoint to stop Bluetooth listener."""
+    if request.method != 'POST':
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
     if bluetooth_manager.stop():
         return JsonResponse({"status": "stopped", "message": "Bluetooth listener stopped successfully"})
     return JsonResponse({"status": "error", "message": "Bluetooth listener is not running"}, status=400)
+
+@csrf_exempt
+def get_latest_data(request):
+    """API endpoint to get the latest data point."""
+    print("🔍 get_latest_data view called")
+    if request.method != 'GET':
+        print("❌ Invalid request method")
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    data = bluetooth_manager.get_latest_data()
+    print(f"📊 Latest data from manager: {data}")
+    if data:
+        print("✅ Returning data to client")
+        return JsonResponse({"status": "success", "data": data})
+    print("⚠️ No data available to return")
+    return JsonResponse({"status": "error", "message": "No data available"}, status=404)
 
 @csrf_exempt
 def get_available_ports(request):
