@@ -4,91 +4,810 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bluetooth Data Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --success: #10b981;
+            --error: #ef4444;
+            --background: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 50px;
-            background-color: #121212;
-            color: white;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 32px;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-2px);
         }
 
         h1 {
-            font-size: 2em;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
         button {
-            font-size: 1.2em;
-            padding: 10px 20px;
-            margin: 10px;
+            flex: 1;
+            padding: 12px 24px;
             border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            border-radius: 5px;
-            transition: 0.3s;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button svg {
+            width: 18px;
+            height: 18px;
         }
 
         #startBtn {
-            background-color: #28a745;
+            background-color: var(--primary);
             color: white;
         }
 
         #startBtn:hover {
-            background-color: #218838;
+            background-color: var(--primary-hover);
         }
 
         #stopBtn {
-            background-color: #dc3545;
+            background-color: var(--error);
             color: white;
         }
 
         #stopBtn:hover {
-            background-color: #c82333;
+            background-color: #dc2626;
+        }
+
+        #scanBtn {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        #scanBtn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status-container {
+            background-color: var(--background);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
         #status {
-            font-size: 1.2em;
-            margin-top: 20px;
+            font-size: 14px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-light);
+            transition: all 0.3s ease;
+        }
+
+        .status-indicator.active {
+            background-color: var(--success);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        }
+
+        .status-indicator.error {
+            background-color: var(--error);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+        }
+
+        .ports-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .ports-table th,
+        .ports-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ports-table th {
+            font-weight: 600;
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .ports-table td {
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .port-row {
+            transition: background-color 0.2s ease;
+        }
+
+        .port-row:hover {
+            background-color: var(--background);
+        }
+
+        .port-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .port-status.connected {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .port-status.disconnected {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .test-button {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .test-button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .test-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .toast.success {
+            background-color: var(--success);
+        }
+
+        .toast.error {
+            background-color: var(--error);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .port-testing-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .port-testing-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .port-test-result {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .port-test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .port-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #6c757d;
+        }
+
+        .status-indicator.active {
+            background: #28a745;
+        }
+
+        .status-indicator.error {
+            background: #dc3545;
+        }
+
+        .port-test-details {
+            display: grid;
+            gap: 20px;
+        }
+
+        .port-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .info-label {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .info-value {
+            font-weight: 500;
+        }
+
+        .raw-data-section, .parsed-data-section {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .raw-data-container {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+
+        .parsed-data-container {
+            margin-top: 10px;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .data-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .data-label {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .data-value {
+            font-weight: 500;
+            font-size: 1.1em;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Bluetooth Data Logger</h1>
+        
+        <div class="section">
+            <div class="section-title">Available Ports</div>
+            <button id="scanBtn" onclick="scanPorts()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Scan Ports
+            </button>
+            <table class="ports-table">
+                <thead>
+                    <tr>
+                        <th>Port</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="portsList">
+                    <!-- Ports will be populated here -->
+                </tbody>
+            </table>
+        </div>
 
-    <h1>Bluetooth Data Logger</h1>
+        <div class="section">
+            <div class="section-title">Connection Control</div>
+            <div class="button-group">
+                <button id="startBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Start
+                </button>
+                <button id="stopBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                    </svg>
+                    Stop
+                </button>
+            </div>
 
-    <button id="startBtn" onclick="startBluetooth()">Start Bluetooth</button>
-    <button id="stopBtn" onclick="stopBluetooth()">Stop Bluetooth</button>
+            <div class="status-container">
+                <p id="status">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span id="statusText">Idle</span>
+                </p>
+            </div>
+        </div>
 
-    <p id="status">Status: <span id="statusText">Idle</span></p>
+        <div class="port-testing-section">
+            <h3>Port Testing</h3>
+            <div class="port-testing-container">
+                <div id="portTestResult" class="port-test-result">
+                    <div class="port-test-header">
+                        <h4>Port Test Results</h4>
+                        <div class="port-status">
+                            <span class="status-indicator"></span>
+                            <span class="status-text">Not tested</span>
+                        </div>
+                    </div>
+                    <div class="port-test-details">
+                        <div class="port-info">
+                            <div class="info-item">
+                                <span class="info-label">Device:</span>
+                                <span class="info-value" id="portDevice">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Description:</span>
+                                <span class="info-value" id="portDescription">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">HWID:</span>
+                                <span class="info-value" id="portHwid">-</span>
+                            </div>
+                        </div>
+                        <div class="raw-data-section">
+                            <h5>Raw Data</h5>
+                            <div class="raw-data-container">
+                                <pre id="rawDataDisplay">No data received</pre>
+                            </div>
+                        </div>
+                        <div class="parsed-data-section">
+                            <h5>Parsed Data</h5>
+                            <div class="parsed-data-container">
+                                <div class="data-grid">
+                                    <div class="data-item">
+                                        <span class="data-label">Latitude:</span>
+                                        <span class="data-value" id="parsedLat">-</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Longitude:</span>
+                                        <span class="data-value" id="parsedLng">-</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Temperature:</span>
+                                        <span class="data-value" id="parsedTemp">-</span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Yaw:</span>
+                                        <span class="data-value" id="parsedYaw">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
 
     <script>
-        function startBluetooth() {
-            fetch('/bluetooth/start/', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('statusText').innerText = data.status;
-                    alert('✅ Bluetooth started!');
-                })
-                .catch(error => {
-                    document.getElementById('statusText').innerText = 'Error';
-                    alert('❌ Error starting Bluetooth');
-                    console.error(error);
-                });
+        let isRunning = false;
+        let currentPort = null;
+        let autoRefreshInterval = null;
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const scanBtn = document.getElementById('scanBtn');
+        const statusText = document.getElementById('statusText');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const toast = document.getElementById('toast');
+        const portsList = document.getElementById('portsList');
+
+        function showToast(message, type) {
+            const icon = type === 'success' 
+                ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>'
+                : '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
+            
+            toast.innerHTML = `${icon} ${message}`;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.className = 'toast';
+            }, 3000);
         }
 
-        function stopBluetooth() {
-            fetch('/bluetooth/stop/', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('statusText').innerText = data.status;
-                    alert('🛑 Bluetooth stopped!');
-                })
-                .catch(error => {
-                    document.getElementById('statusText').innerText = 'Error';
-                    alert('❌ Error stopping Bluetooth');
-                    console.error(error);
-                });
+        function updateStatus(isActive, message) {
+            statusText.textContent = message;
+            statusIndicator.className = 'status-indicator' + (isActive ? ' active' : '');
+            startBtn.disabled = isActive;
+            stopBtn.disabled = !isActive;
         }
+
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            autoRefreshInterval = setInterval(async () => {
+                if (currentPort) {
+                    try {
+                        const response = await fetch('/bluetooth/test-port/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({ port: currentPort })
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            updatePortTestResult(result);
+                        }
+                    } catch (error) {
+                        console.error('Error refreshing port data:', error);
+                    }
+                }
+            }, 1000); // Refresh every 1 second
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
+        async function scanPorts() {
+            try {
+                scanBtn.disabled = true;
+                scanBtn.innerHTML = '<span class="loading"></span> Scanning...';
+                
+                const response = await fetch('/bluetooth/ports/');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    renderPorts(data.ports);
+                    showToast('Ports scanned successfully', 'success');
+                } else {
+                    showToast('Error scanning ports', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Failed to scan ports', 'error');
+            } finally {
+                scanBtn.disabled = false;
+                scanBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Scan Ports
+                `;
+            }
+        }
+
+        function renderPorts(ports) {
+            portsList.innerHTML = ports.map(port => `
+                <tr class="port-row">
+                    <td>${port.device}</td>
+                    <td>${port.description}</td>
+                    <td>
+                        <span class="port-status ${port.is_connected ? 'connected' : 'disconnected'}">
+                            ${port.is_connected ? 'Connected' : 'Disconnected'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="test-button" onclick="testPort('${port.device}')" ${port.is_connected ? 'disabled' : ''}>
+                            Test
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function testPort(portName, isAutoRefresh = false) {
+            currentPort = portName;
+            const testBtn = event?.target;
+            
+            if (!isAutoRefresh && testBtn) {
+                const originalText = testBtn.innerHTML;
+                testBtn.disabled = true;
+                testBtn.innerHTML = '<span class="loading"></span> Testing...';
+            }
+
+            try {
+                const response = await fetch('/bluetooth/test-port/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ port: portName })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const result = await response.json();
+                updatePortTestResult(result);
+
+                if (!isAutoRefresh) {
+                    if (result.success) {
+                        showToast('Port test successful', 'success');
+                    } else {
+                        showToast(result.message || 'Port test failed', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                if (!isAutoRefresh) {
+                    showToast('Error testing port: ' + (error.message || 'Unknown error'), 'error');
+                }
+                updatePortTestResult({
+                    success: false,
+                    message: 'Error testing port',
+                    port_info: {
+                        device: portName,
+                        description: '',
+                        hwid: ''
+                    },
+                    raw_data: null,
+                    data: null
+                });
+            } finally {
+                if (!isAutoRefresh && testBtn) {
+                    testBtn.disabled = false;
+                    testBtn.innerHTML = 'Test';
+                }
+            }
+        }
+
+        function updatePortTestResult(result) {
+            const resultContainer = document.getElementById('portTestResult');
+            const statusIndicator = resultContainer.querySelector('.status-indicator');
+            const statusText = resultContainer.querySelector('.status-text');
+            const portDevice = document.getElementById('portDevice');
+            const portDescription = document.getElementById('portDescription');
+            const portHwid = document.getElementById('portHwid');
+            const rawDataDisplay = document.getElementById('rawDataDisplay');
+            const parsedLat = document.getElementById('parsedLat');
+            const parsedLng = document.getElementById('parsedLng');
+            const parsedTemp = document.getElementById('parsedTemp');
+            const parsedYaw = document.getElementById('parsedYaw');
+
+            portDevice.textContent = result.port_info?.device || '-';
+            portDescription.textContent = result.port_info?.description || '-';
+            portHwid.textContent = result.port_info?.hwid || '-';
+
+            if (result.success) {
+                statusIndicator.className = 'status-indicator active';
+                statusText.textContent = 'Port is transmitting data';
+            } else {
+                statusIndicator.className = 'status-indicator error';
+                statusText.textContent = result.message || 'Test failed';
+            }
+
+            rawDataDisplay.textContent = result.raw_data || 'No data received';
+
+            if (result.data) {
+                parsedLat.textContent = result.data.latitude || '-';
+                parsedLng.textContent = result.data.longitude || '-';
+                parsedTemp.textContent = result.data.temperature ? `${result.data.temperature}°C` : '-';
+                parsedYaw.textContent = result.data.yaw ? `${result.data.yaw}°` : '-';
+            } else {
+                parsedLat.textContent = '-';
+                parsedLng.textContent = '-';
+                parsedTemp.textContent = '-';
+                parsedYaw.textContent = '-';
+            }
+        }
+
+        async function startBluetooth() {
+            if (!currentPort) {
+                showToast('Please select a port first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/bluetooth/start/', { 
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    isRunning = true;
+                    updateStatus(true, 'Running');
+                    showToast('Bluetooth started successfully', 'success');
+                    startAutoRefresh();
+                } else {
+                    showToast(data.message || 'Error starting Bluetooth', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Failed to start Bluetooth', 'error');
+            }
+        }
+
+        async function stopBluetooth() {
+            try {
+                const response = await fetch('/bluetooth/stop/', { 
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    isRunning = false;
+                    updateStatus(false, 'Stopped');
+                    showToast('Bluetooth stopped successfully', 'success');
+                    stopAutoRefresh();
+                } else {
+                    showToast(data.message || 'Error stopping Bluetooth', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Failed to stop Bluetooth', 'error');
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        updateStatus(false, 'Idle');
+        scanPorts();
+        startAutoRefresh();
+
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
     </script>
-
 </body>
 </html>
