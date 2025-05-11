@@ -20,7 +20,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 os.system("")  # Enable ANSI escape sequences in Windows CMD
 
 # Configuration
-BLUETOOTH_PORT = "COM8"
+BLUETOOTH_PORT = "COM3"
 BAUD_RATE = 115200
 MAX_RETRIES = 3
 RETRY_DELAY = 2
